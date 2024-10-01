@@ -7,6 +7,7 @@ export default async function connect() {
         
 }
     catch(error){
+        console.log(process.env.MONGODB_URI);
      console.error("mongo DB connecting error",error);
      process.exit(1);
     }
