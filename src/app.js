@@ -5,4 +5,6 @@ const app=express();
 app.use(cors({
     origin:'*'
 }));
+app.use(express.json({limit:"16Kb"}));
+app.use(express.urlencoded({extended:true,limit:"16kb"}));
 export {app};
