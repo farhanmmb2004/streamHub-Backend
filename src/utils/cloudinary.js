@@ -16,7 +16,7 @@ const uploadOnCloudinary=async (loaclFilePath)=>{
             resource_type: 'auto',
          }
      )
-     console.log(response.url);
+     fs.unlinkSync(loaclFilePath);
      return response
     }
     catch(error){
