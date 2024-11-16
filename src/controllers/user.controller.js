@@ -7,8 +7,11 @@ import {ApiResponse} from "../utils/ApiResponse.js"
 const generateAccessAndRefreshToken=async(userId)=>{
 try {
     const user=await User.findById(userId);
+    // console.log(user);
     const accessToken=await user.generateAccessToken()
+    // console.log(accessToken);
     const refreshToken=await user.generateRefreshToken()
+    // console.log("asdads");
     user.refreshToken=refreshToken;
     user.save({validateBeforeSave:false});
     return {accessToken,refreshToken}
@@ -59,15 +62,16 @@ const registerUser=asyncHandler(async (req,res)=>{
         new ApiResponse(200,createdUser,"user registerd successfully")
     );
 });
-const loginUser=asyncHanler(async(req,res)=>{
+const loginUser=asyncHandler(async(req,res)=>{
 const {username,email,password}=req.body
-if(!username&&!password){
+if(!username&&!email){
 throw new ApiError(400,"email or username required");
 }
 const user=await User.findOne({$or:[{username},{email}]})
 if(!user){
 throw new ApiError(404,"user does not exist");
 }
+// console.log(password);
 const isPasswordCorrect=await user.isPasswordCorrect(password);
 if(!isPasswordCorrect){
 throw new ApiError(401,"invalid password");
