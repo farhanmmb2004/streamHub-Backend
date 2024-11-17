@@ -4,7 +4,6 @@ import jwt from "jsonwebtoken";
 import { User } from "../models/user.model.js";
 export const verifyToken=asyncHandler(async(req,res,next)=>{
     try {
-        console.log("dafa");
         const token=req.cookie?.accessToken||req.header("Authorization")?.replace("Bearer ","");
     if(!token){
         throw new ApiError(401,"unAuthorized request");
