@@ -2,7 +2,7 @@ import mongoose from "mongoose";
 import { DB_NAME } from "../constant.js";
 export default async function connect() {
     try{
-    const connection=await mongoose.connect(`mongodb+srv://farhankhanmmb2004:mfkhan@farhan1.dvlys.mongodb.net/${DB_NAME}`);
+    const connection=await mongoose.connect(`${process.env.MONGODB_URI}${DB_NAME}`);
     console.log(`\n MongooDB Connected !! ${connection.connection.host}`);
         
 }
