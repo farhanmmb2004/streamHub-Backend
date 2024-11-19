@@ -100,8 +100,8 @@ const logoutUser=asyncHandler(async(req,res)=>{
      await User.findByIdAndUpdate(
         req.user._id,
         {
-            $set:{
-                refreshToken:undefined
+            $unset:{
+                refreshToken:1
             }
         }
      )
@@ -122,7 +122,7 @@ try {
     if(!incomingRefreshToken){
         throw new ApiError(401,"unauthorized");
         }
-    const decodedToken=await jwt.verify(incomingRefreshToken,"danish-bhai-jinda-hote-na");
+    const decodedToken=await jwt.verify(incomingRefreshToken,process.env.REFRESH_TOKEN_SECRET);
     // console.log(decodedToken);
     const user=await User.findById(decodedToken?._id);
     if(!user){
@@ -132,7 +132,7 @@ try {
     //     console.log(user?.refreshToken);
     if(incomingRefreshToken!==user?.refreshToken){
         
-    throw new ApiError(401,"Refresh token is not valid");
+    throw new ApiError(401,"Refresh token is expired");
     }
     // console.log("xyz");
     const{accessToken,refreshToken}=await generateAccessAndRefreshToken(user._id);
@@ -154,7 +154,7 @@ try {
 });
 const changePassword=asyncHandler(async(req,res)=>{
 const {oldPassword,newPassword}=req.body;
-const user= User.findOne(req.user._id);
+const user=await User.findById(req.user._id);
 console.log(user);
 const isPasswordCorrect=await user.isPasswordCorrect(oldPassword);
 if(!isPasswordCorrect){
