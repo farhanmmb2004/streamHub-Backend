@@ -12,5 +12,7 @@ app.use(cookieParser());
 
 //routes
 import userRouter from './routes/user.routes.js'
+import vidioRouter from './routes/vidio.routes.js'
 app.use("/api/v1/users",userRouter);
+app.use("/api/v1/vidios",vidioRouter);
 export {app};
