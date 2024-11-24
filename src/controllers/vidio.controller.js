@@ -31,6 +31,19 @@ const publishAVidio=asyncHandler(async(req,res)=>{
     .status(200)
     .json(new ApiResponse(200,uploadedVidio,"vidio uploaded successfully"));
 })
+const getVidioById = asyncHandler(async (req, res) => {
+    const { vidioId } = req.params
+    if(!vidioId){
+    throw new ApiError(400,"vidio id required");
+    }
+    const vidio=await Vidio.findById(vidioId);
+    if(!vidio){
+    throw new ApiError(400,"vidio not found");
+    } 
+    return res
+    .status(200)
+    .json(new ApiResponse(200,vidio,"fetched vidio successfully"));
+})
 export {
-    publishAVidio
+    publishAVidio,getVidioById
 }
