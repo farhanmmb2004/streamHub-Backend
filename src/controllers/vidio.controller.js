@@ -6,7 +6,7 @@ import { uploadOnCloudinary } from "../utils/cloudinary.js"
 import mongoose from "mongoose"
 const publishAVidio=asyncHandler(async(req,res)=>{
     const {title,description,duration}=req.body;
-    if(!title||!description||!duration){
+    if(!title||!description||!duration||title===""){
     throw new ApiError(400,"title,duration and description are required");
     }
     const vidioLocalPath=req.files?.vidio[0]?.path;
@@ -37,7 +37,10 @@ const getVidioById = asyncHandler(async (req, res) => {
     if(!vidioId){
     throw new ApiError(400,"vidio id required");
     }
-    const vidio=await Vidio.findById(mongoose.Types.ObjectId(vidioId));
+    if (!mongoose.Types.ObjectId.isValid(vidioId)) {
+        throw new ApiError(400, "Invalid vidio ID format");
+    }
+    const vidio=await Vidio.findById(vidioId);
     if(!vidio){
     throw new ApiError(400,"vidio not found");
     } 
@@ -45,6 +48,30 @@ const getVidioById = asyncHandler(async (req, res) => {
     .status(200)
     .json(new ApiResponse(200,vidio,"fetched vidio successfully"));
 })
+const updateVidio=asyncHandler(async(req,res)=>{
+    const vidioId=req.params
+    const {title,description}=req.body
+    if(!title||!description){
+    throw new ApiError(400,"titile and description both are required");
+    }
+    const thumbnailLocalPath=req.file.path;
+    if(!thumbnailLocalPath){
+    throw new ApiError(400,"send thumbnail to do updated");
+    }
+    const newThumbnail=await uploadOnCloudinary(thumbnailLocalPath)
+   const vidio=await Vidio.findOneAndUpdate(  vidioId,
+    {$set:{
+    thumbnail:newThumbnail.url,
+    title:title,
+    description:description
+    }
+},
+    {new :true}
+   )
+    return res
+    .status(200)
+    .json(new ApiResponse(200,vidio,"updated successfully"));
+})
 export {
-    publishAVidio,getVidioById
+    publishAVidio,getVidioById,updateVidio
 }
