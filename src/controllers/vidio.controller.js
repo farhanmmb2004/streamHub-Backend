@@ -3,6 +3,7 @@ import {Vidio} from "../models/vidio.model.js"
 import {ApiError} from "../utils/ApiError.js"
 import {ApiResponse} from "../utils/ApiResponse.js"
 import { uploadOnCloudinary } from "../utils/cloudinary.js"
+import mongoose from "mongoose"
 const publishAVidio=asyncHandler(async(req,res)=>{
     const {title,description,duration}=req.body;
     if(!title||!description||!duration){
@@ -36,7 +37,7 @@ const getVidioById = asyncHandler(async (req, res) => {
     if(!vidioId){
     throw new ApiError(400,"vidio id required");
     }
-    const vidio=await Vidio.findById(vidioId);
+    const vidio=await Vidio.findById(mongoose.Types.ObjectId(vidioId));
     if(!vidio){
     throw new ApiError(400,"vidio not found");
     } 

@@ -12,6 +12,6 @@ router.route('/').post(verifyToken,upload.fields([
         maxCount:1
     }
 ]),publishAVidio);
-router.route(":vidioId")
+router.route("/:vidioId")
 .get(verifyToken,getVidioById);
 export default router;
