@@ -4,6 +4,9 @@ import {ApiError} from "../utils/ApiError.js"
 import {ApiResponse} from "../utils/ApiResponse.js"
 import { uploadOnCloudinary } from "../utils/cloudinary.js"
 import mongoose from "mongoose"
+const getAllVideos = asyncHandler(async (req, res) => {
+  const { page = 1, limit = 10, query, sortBy, sortType, userId } = req.query
+})
 const publishAVidio=asyncHandler(async(req,res)=>{
     const {title,description,duration}=req.body;
     if(!title||!description||!duration||title===""){
@@ -77,6 +80,32 @@ const updateVidio=asyncHandler(async(req,res)=>{
     .status(200)
     .json(new ApiResponse(200,vidio,"updated successfully"));
 })
+const deleteVidio=asyncHandler(async(req,res)=>{
+const {vidioId}=req.params;
+const vidio=await Vidio.findByIdAndDelete(vidioId);
+if(!vidio){
+throw new ApiError(400,"cannot find vidio");
+}
+return res.status(200)
+.json(new ApiResponse(200,vidio,"deleted successfully"));
+})
+const togglePublishVidio=asyncHandler(async(req,res)=>{
+const {vidioId}=req.params;
+const curVidio=await Vidio.findById(vidioId);
+const vidio=await Vidio.findByIdAndUpdate(
+  vidioId,
+  {
+    $set:{
+      isPublished:!curVidio.isPublished
+    }
+  },
+  {new:true}
+)
+if(!vidio){
+throw new ApiError(400,"vidio not found");
+}
+return res.status(200).json(new ApiResponse(200,vidio,"status toggled"));
+})
 export {
-    publishAVidio,getVidioById,updateVidio
+    getAllVideos,publishAVidio,getVidioById,updateVidio,deleteVidio,togglePublishVidio
 }
