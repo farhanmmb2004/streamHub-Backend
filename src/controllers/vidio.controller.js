@@ -49,7 +49,7 @@ const getVidioById = asyncHandler(async (req, res) => {
     .json(new ApiResponse(200,vidio,"fetched vidio successfully"));
 })
 const updateVidio=asyncHandler(async(req,res)=>{
-    const vidioId=req.params
+    const {vidioId}=req.params
     const {title,description}=req.body
     if(!title||!description){
     throw new ApiError(400,"titile and description both are required");
@@ -59,15 +59,20 @@ const updateVidio=asyncHandler(async(req,res)=>{
     throw new ApiError(400,"send thumbnail to do updated");
     }
     const newThumbnail=await uploadOnCloudinary(thumbnailLocalPath)
-   const vidio=await Vidio.findOneAndUpdate(  vidioId,
-    {$set:{
-    thumbnail:newThumbnail.url,
-    title:title,
-    description:description
+    if(!newThumbnail){
+    throw new ApiError(500,"failed to update thumbnail");
     }
-},
-    {new :true}
-   )
+    const vidio = await Vidio.findByIdAndUpdate(
+       vidioId,
+        { 
+          $set: {
+            thumbnail: newThumbnail.url,
+            title: title,
+            description: description
+          }
+        },
+        { new: true } 
+      );
     return res
     .status(200)
     .json(new ApiResponse(200,vidio,"updated successfully"));
