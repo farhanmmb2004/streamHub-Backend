@@ -1,7 +1,7 @@
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { ApiError } from "../utils/ApiError.js";
 import {User} from  "../models/user.model.js";
-import {uploadOnCloudinary} from "../utils/cloudinary.js"
+import {removeFromCloudinary, uploadOnCloudinary} from "../utils/cloudinary.js"
 import {ApiResponse} from "../utils/ApiResponse.js"
 import jwt from 'jsonwebtoken';
 import mongoose from "mongoose";
@@ -201,6 +201,7 @@ const updateUserAvtar=asyncHandler(async(req,res)=>{
     if(!avtar){
     throw new ApiError("Error while uploading avtar");
     }
+    const prev=await User.findById(req.user?._id);
     const user=await User.findOneAndUpdate(req.user?._id,
         {
             $set:{avtar:avtar.url}
@@ -208,6 +209,7 @@ const updateUserAvtar=asyncHandler(async(req,res)=>{
         {new:true}
     ).select("-password");
     console.log(user);
+    const temp=await removeFromCloudinary(prev.avtar);
     return res
     .status(200)
     .json(new ApiResponse(200,user,"successfully updated avatar"));
@@ -221,12 +223,14 @@ const updateUserCoverImage=asyncHandler(async(req,res)=>{
     if(!coverImage){
     throw new ApiError("Error while uploading avtar");
     }
+    const prev=await User.findById(req.user?._id);
     const user=await User.findOneAndUpdate(req.user?._id,
         {
             $set:{coverImage:coverImage.url}
         },
         {new:true}
     ).select("-password");
+    await removeFromCloudinary(prev.coverImage);
     return res
     .status(200)
     .json(new ApiResponse(200,user,"successfully updated coverImage"));

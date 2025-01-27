@@ -2,7 +2,7 @@ import {asyncHandler} from "../utils/asyncHandler.js"
 import {Vidio} from "../models/vidio.model.js"
 import {ApiError} from "../utils/ApiError.js"
 import {ApiResponse} from "../utils/ApiResponse.js"
-import { uploadOnCloudinary } from "../utils/cloudinary.js"
+import { uploadOnCloudinary,removeFromCloudinary } from "../utils/cloudinary.js"
 import mongoose from "mongoose"
 const getAllVideos = asyncHandler(async (req, res) => {
   const { page = 1, limit = 10, query, sortBy, sortType, userId } = req.query
@@ -65,6 +65,7 @@ const updateVidio=asyncHandler(async(req,res)=>{
     if(!newThumbnail){
     throw new ApiError(500,"failed to update thumbnail");
     }
+    const prev=await Vidio.findById(vidioId);
     const vidio = await Vidio.findByIdAndUpdate(
        vidioId,
         { 
@@ -76,6 +77,7 @@ const updateVidio=asyncHandler(async(req,res)=>{
         },
         { new: true } 
       );
+      await removeFromCloudinary(prev.thumbnail);
     return res
     .status(200)
     .json(new ApiResponse(200,vidio,"updated successfully"));
