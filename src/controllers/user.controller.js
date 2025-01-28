@@ -173,7 +173,7 @@ const getCurrentUser=asyncHandler(async(req,res)=>{
     .json(new ApiResponse(200,req.user,"current user fetched succesfully"));
 });
 const updateAccountDetails=asyncHandler(async(req,res)=>{
-const {email,username}=req.body;
+const {email,username,fullname}=req.body;
 console.log(req.user._id);
 
 const user = await User.findByIdAndUpdate(
@@ -181,7 +181,8 @@ const user = await User.findByIdAndUpdate(
     {
         $set: {
             username,
-            email
+            email,
+            fullname
         }
     },
     { new: true } 
