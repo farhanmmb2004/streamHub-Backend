@@ -88,38 +88,68 @@ const getLikedVideos = asyncHandler(async (req, res) => {
     // let likedvidios=await Like.findOne({
     //     likedBy:req.user?.id
     // })
-    let likedvidios=await Like.aggregate(
-        [{$match:{likedBy: new mongoose.Types.ObjectId(req.user?.id) }
+    let likedvidios = await Like.aggregate([
+        {
+            $match: {
+                likedBy: new mongoose.Types.ObjectId(req.user?.id)
+            }
         },
         {
-          $lookup: {
-            from: "vidios",  // Ensure correct collection name
-            let: { vidioId: "$vidio" },  // Store localField value in variable
-            pipeline: [
-              { 
-                $match: { 
-                  $expr: { $eq: ["$_id", { $toObjectId: "$$vidioId" }] }  // Match _id with vidio field
-                } 
-              }
-            ],
-            as: "videodetails"
-          }
+            $addFields: {
+                vidio: { $toObjectId: "$vidio" }  // Convert 'vidio' string to ObjectId
+            }
         },
-        { $unwind: "$videodetails" } // Convert user ID to ObjectId
-        ]
-    );
-    console.log(likedvidios);
-    /* ,
-    {
-        $lookup:{
-        from:"vidios",
-        localField:"vidio",
-        foreignField:"_id",
-        as:"videodetails"
-        }
-         }
-     ,
-          {$unwind:"$videoDetails"}*/
+        {
+            $lookup: {
+                from: "vidios",
+                localField: "vidio",
+                foreignField: "_id",
+                as: "vidiodetails",
+                pipeline: [
+                    {
+                        $lookup: {
+                            from: "users",
+                            localField: "owner",
+                            foreignField: "_id",
+                            as: "ownerDetails"
+                        }
+                    },
+                    {
+                        $unwind: "$ownerDetails"
+                    }
+                ]
+            }
+        },
+        {
+            $unwind: "$vidiodetails"
+        },
+        {
+            $sort: {
+                createdAt: -1
+            }
+        },{
+            $project:{
+                _id:0,
+                vidiodetails:{
+                thumbnail:1,
+                duration:1,
+                title:1,
+                _id:1,
+                views:1,
+                owner:1,
+                createdAt:1,
+                isPublished:1,
+                vidioFile:1,
+                ownerDetails:{
+                    username:1,
+                    email:1,
+                    avatar:1,
+                    fullname:1
+                }
+            }
+        }}
+    ]);
+    
     return res.status(200).json(new ApiResponse(200,likedvidios,"success"));
 })
 

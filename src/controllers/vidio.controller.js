@@ -3,7 +3,7 @@ import {Vidio} from "../models/vidio.model.js"
 import {ApiError} from "../utils/ApiError.js"
 import {ApiResponse} from "../utils/ApiResponse.js"
 import { uploadOnCloudinary,removeFromCloudinary } from "../utils/cloudinary.js"
-import mongoose from "mongoose"
+import mongoose  from "mongoose"
 const getAllVideos = asyncHandler(async (req, res) => {
   const { page = 1, limit = 10, query, sortBy, sortType, userId } = req.query
     //TODO: get all videos based on query, sort, pagination
@@ -23,7 +23,7 @@ const getAllVideos = asyncHandler(async (req, res) => {
                 localField:"owner",
                 foreignField:"_id",
                 as:"videoBy"
-            }
+            },
         },
         {
             $unwind:"$videoBy"
@@ -31,13 +31,13 @@ const getAllVideos = asyncHandler(async (req, res) => {
         {
             $project:{
                 thumbnail:1,
-                videoFile:1,
+                vidioFile:1,
                 title:1,
                 description:1,
                 videoBy:{
-                    fullName:1,
-                    userName:1,
-                    avatar:1
+                    fullname:1,
+                    username:1,
+                    avtar:1
                 }
             }
         },
@@ -88,11 +88,8 @@ const publishAVidio=asyncHandler(async(req,res)=>{
 })
 const getVidioById = asyncHandler(async (req, res) => {
     const { vidioId } = req.params
-    if(!vidioId){
-    throw new ApiError(400,"vidio id required");
-    }
     if (!mongoose.Types.ObjectId.isValid(vidioId)) {
-        throw new ApiError(400, "Invalid vidio ID format");
+        throw new ApiError(400, "Invalid vidio ID");
     }
     const vidio=await Vidio.findById(vidioId);
     if(!vidio){
