@@ -5,7 +5,7 @@ content:{
  type:String,
  required:true
 },
-video:{
+vidio:{
     type:Schema.Types.ObjectId,
     ref:"Vidio"
 },
@@ -16,5 +16,5 @@ owner:{
 },{
     timestamps:true
 })
-videoSchema.plugin(mongooseAggregatePaginate);
+commentSchema.plugin(mongooseAggregatePaginate);
 export const Comment=mongoose.model("Comment",commentSchema);
