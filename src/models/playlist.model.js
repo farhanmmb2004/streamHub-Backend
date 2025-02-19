@@ -18,4 +18,4 @@ owner:{
 },{
     timestamps:true
 })
-export const Playlist=mongoose.model("Playlist",plalistSchema);
+export const Playlist=mongoose.model("Playlist",playlistSchema);
