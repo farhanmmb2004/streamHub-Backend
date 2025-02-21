@@ -91,7 +91,99 @@ const getVidioById = asyncHandler(async (req, res) => {
     if (!mongoose.Types.ObjectId.isValid(vidioId)) {
         throw new ApiError(400, "Invalid vidio ID");
     }
-    const vidio=await Vidio.findById(vidioId);
+    
+        const vidio = await Vidio.aggregate([
+            {
+                $match: {
+                    _id: new mongoose.Types.ObjectId(vidioId)
+                }
+            },
+            {
+                $lookup: {
+                    from: "likes",
+                    localField: "_id",
+                    foreignField: "vidio",
+                    as: "likes"
+                }
+            },
+            {
+                $lookup: {
+                    from: "users",
+                    localField: "owner",
+                    foreignField: "_id",
+                    as: "owner",
+                    pipeline: [
+                        {
+                            $lookup: {
+                                from: "subscriptions",
+                                localField: "_id",
+                                foreignField: "channel",
+                                as: "subscribers"
+                            }
+                        },
+                        {
+                            $addFields: {
+                                subscribersCount: {
+                                    $size: "$subscribers"
+                                },
+                                isSubscribed: {
+                                    $cond: {
+                                        if: {
+                                            $in: [
+                                                req.user?._id,
+                                                "$subscribers.subscriber"
+                                            ]
+                                        },
+                                        then: true,
+                                        else: false
+                                    }
+                                }
+                            }
+                        },
+                        {
+                            $project: {
+                                username: 1,
+                                "avatar.url": 1,
+                                subscribersCount: 1,
+                                isSubscribed: 1
+                            }
+                        }
+                    ]
+                }
+            },
+            {
+                $addFields: {
+                    likesCount: {
+                        $size: "$likes"
+                    },
+                    owner: {
+                        $first: "$owner"
+                    },
+                    isLiked: {
+                        $cond: {
+                            if: {$in: [req.user?._id, "$likes.likedBy"]},
+                            then: true,
+                            else: false
+                        }
+                    }
+                }
+            },
+            {
+                $project: {
+                    vidioFile: 1,
+                    title: 1,
+                    description: 1,
+                    veiws: 1,
+                    createdAt: 1,
+                    duration: 1,
+                    comments: 1,
+                    owner: 1,
+                    likesCount: 1,
+                    isLiked: 1
+                }
+            }
+        ]);
+    
     if(!vidio){
     throw new ApiError(400,"vidio not found");
     } 
