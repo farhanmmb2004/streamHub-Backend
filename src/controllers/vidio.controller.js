@@ -34,6 +34,9 @@ const getAllVideos = asyncHandler(async (req, res) => {
                 vidioFile:1,
                 title:1,
                 description:1,
+                duration:1,
+                createdAt:1,
+                views:1,
                 videoBy:{
                     fullname:1,
                     username:1,
@@ -143,7 +146,7 @@ const getVidioById = asyncHandler(async (req, res) => {
                         {
                             $project: {
                                 username: 1,
-                                "avatar.url": 1,
+                                avtar: 1,
                                 subscribersCount: 1,
                                 isSubscribed: 1
                             }
@@ -189,7 +192,7 @@ const getVidioById = asyncHandler(async (req, res) => {
     } 
     return res
     .status(200)
-    .json(new ApiResponse(200,vidio,"fetched vidio successfully"));
+    .json(new ApiResponse(200,vidio[0],"fetched vidio successfully"));
 })
 const updateVidio=asyncHandler(async(req,res)=>{
     const {vidioId}=req.params
