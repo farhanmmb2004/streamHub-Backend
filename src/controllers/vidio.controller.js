@@ -2,6 +2,7 @@ import {asyncHandler} from "../utils/asyncHandler.js"
 import {Vidio} from "../models/vidio.model.js"
 import {ApiError} from "../utils/ApiError.js"
 import {ApiResponse} from "../utils/ApiResponse.js"
+import { User } from "../models/user.model.js"
 import { uploadOnCloudinary,removeFromCloudinary } from "../utils/cloudinary.js"
 import mongoose  from "mongoose"
 const getAllVideos = asyncHandler(async (req, res) => {
@@ -176,7 +177,7 @@ const getVidioById = asyncHandler(async (req, res) => {
                     vidioFile: 1,
                     title: 1,
                     description: 1,
-                    veiws: 1,
+                    views: 1,
                     createdAt: 1,
                     duration: 1,
                     comments: 1,
@@ -190,6 +191,18 @@ const getVidioById = asyncHandler(async (req, res) => {
     if(!vidio){
     throw new ApiError(400,"vidio not found");
     } 
+    await Vidio.findByIdAndUpdate(vidioId, {
+        $inc: {
+            views: 1
+        }
+    });
+
+    // add this video to user watch history
+    await User.findByIdAndUpdate(req.user?._id, {
+        $addToSet: {
+            watchHistory: vidioId
+        }
+    });
     return res
     .status(200)
     .json(new ApiResponse(200,vidio[0],"fetched vidio successfully"));

@@ -7,6 +7,7 @@ app.use(cors({
     credentials:true
 }));
 // http://localhost:5173
+//https://stream-hub-frontend.vercel.app
 app.use(express.json({limit:"16Kb"}));
 app.use(express.urlencoded({extended:true,limit:"16kb"}));
 app.use(express.static('public'));
