@@ -82,7 +82,8 @@ const getUserChannelSubscribers = asyncHandler(async (req, res) => {
                     fullname:1,
                     email:1,
                     subscribedTOsubscriber:1,
-                    totalSubscribers:1
+                    totalSubscribers:1,
+                    avtar:1
                 }
             }
         }
