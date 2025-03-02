@@ -82,7 +82,8 @@ const {accessToken,refreshToken}=await generateAccessAndRefreshToken(user._id);
 const userlogin=await User.findById(user._id).select("-password -refreshToken");
 const options={
     httpOnly:true,
-    secure:true
+    secure: true,
+    sameSite: "None"
 }
  return res
  .status(200)
