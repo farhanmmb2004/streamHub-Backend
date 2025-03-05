@@ -61,7 +61,7 @@ const getUserChannelSubscribers = asyncHandler(async (req, res) => {
                             subscribedTOsubscriber:{
                                 $cond:{
                                  if:{
-                                    $in:[channelId,"$subscribersOfSubsriber.subscriber"]
+                                    $in:[req.user?._id,"$subscribersOfSubsriber.subscriber"]
                                  },
                                  then:true,
                                  else:false
