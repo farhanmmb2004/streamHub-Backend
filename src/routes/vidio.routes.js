@@ -3,8 +3,8 @@ import { deleteVidio, getAllVideos, getVidioById, publishAVidio, togglePublishVi
 import { upload } from "../middlewares/multer.middleware.js";
 import { verifyToken } from "../middlewares/auth.middleware.js";
 const router=Router();
-router.use(verifyToken)
-router.route('/').post(upload.fields([
+// router.use(verifyToken)
+router.route('/').post(verifyToken,upload.fields([
     {name:"vidio",
         maxCount:1
     },
@@ -15,8 +15,8 @@ router.route('/').post(upload.fields([
 ]),publishAVidio)
 .get(getAllVideos);
 router.route("/:vidioId")
-.get(getVidioById)
-.patch(upload.single("thumbnail"),updateVidio)
-.delete(deleteVidio);
-router.route('/toggle-publish/:vidioId').patch(togglePublishVidio);
+.get(verifyToken,getVidioById)
+.patch(verifyToken,upload.single("thumbnail"),updateVidio)
+.delete(verifyToken,deleteVidio);
+router.route('/toggle-publish/:vidioId').patch(verifyToken,togglePublishVidio);
 export default router;

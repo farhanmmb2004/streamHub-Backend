@@ -8,30 +8,125 @@ import { Comment } from "../models/comment.model.js"
 import { isValidObjectId } from "mongoose"
 import { uploadOnCloudinary,removeFromCloudinary } from "../utils/cloudinary.js"
 import mongoose  from "mongoose"
+// const getAllVideos = asyncHandler(async (req, res) => {
+//   const { page = 1, limit = 10, query, sortBy, sortType, userId } = req.query
+//     //TODO: get all videos based on query, sort, pagination
+//     //this particular controller is i copied from gpt 
+//     const pipeline = [];
+
+
+//     if (query) {
+//         pipeline.push({
+//             $search: {
+//                 index: "search-videos",
+//                 text: {
+//                     query: query,
+//                     path: ["title", "description"] //search only on title, desc
+//                 }
+//             }
+//         });
+//     }
+
+//     if (userId) {
+//         if (!isValidObjectId(userId)) {
+//             throw new ApiError(400, "Invalid userId");
+//         }
+
+//         pipeline.push({
+//             $match: {
+//                 owner: new mongoose.Types.ObjectId(userId)
+//             }
+//         });
+//     }
+
+//     // fetch videos only that are set isPublished as true
+//     pipeline.push({ $match: { isPublished: true } });
+
+//     //sortBy can be views, createdAt, duration
+//     //sortType can be ascending(-1) or descending(1)
+//     if (sortBy && sortType) {
+//         pipeline.push({
+//             $sort: {
+//                 [sortBy]: sortType === "asc" ? 1 : -1
+//             }
+//         });
+//     } else {
+//         pipeline.push({ $sort: { createdAt: -1 } });
+//     }
+
+//     pipeline.push(
+//         {
+//             $lookup: {
+//                 from: "users",
+//                 localField: "owner",
+//                 foreignField: "_id",
+//                 as: "ownerDetails",
+//                 pipeline: [
+//                     {
+//                         $project: {
+//                             username: 1,
+//                             avtar: 1
+//                         }
+//                     }
+//                 ]
+//             }
+//         },
+//         {
+//             $unwind: "$ownerDetails"
+//         }
+//     )
+
+//     const videoAggregate = Vidio.aggregate(pipeline);
+
+//     const options = {
+//         page: parseInt(page, 10),
+//         limit: parseInt(limit, 10)
+//     };
+
+//     const video = await Vidio.aggregatePaginate(videoAggregate, options);
+
+//     return res
+//         .status(200)
+//         .json(new ApiResponse(200, video, "Videos fetched successfully"));
+// })
 const getAllVideos = asyncHandler(async (req, res) => {
-  const { page = 1, limit = 10, query, sortBy, sortType, userId } = req.query
-    //TODO: get all videos based on query, sort, pagination
-    //this particular controller is i copied from gpt 
+    const { page = 1, limit = 10, query, sortBy, sortType, userId } = req.query;
+    
     const pipeline = [];
 
-
+    // If search query exists, perform a separate search query
     if (query) {
-        pipeline.push({
-            $search: {
-                index: "search-videos",
-                text: {
-                    query: query,
-                    path: ["title", "description"] //search only on title, desc
+        const searchResults = await Vidio.aggregate([
+            {
+                $search: {
+                    index: "search-videos",
+                    text: {
+                        query: query,
+                        path: ["title", "description"]
+                    }
                 }
+            },
+            {
+                $project: { _id: 1 } // Only fetch IDs to use in the next pipeline
             }
+        ]);
+
+        const videoIds = searchResults.map(video => video._id);
+
+        if (videoIds.length === 0) {
+            return res.status(200).json(new ApiResponse(200, [], "No videos found"));
+        }
+
+        pipeline.push({
+            $match: { _id: { $in: videoIds } }
         });
     }
 
+    // Filter by user ID if provided
     if (userId) {
         if (!isValidObjectId(userId)) {
             throw new ApiError(400, "Invalid userId");
         }
-
         pipeline.push({
             $match: {
                 owner: new mongoose.Types.ObjectId(userId)
@@ -39,12 +134,11 @@ const getAllVideos = asyncHandler(async (req, res) => {
         });
     }
 
-    // fetch videos only that are set isPublished as true
+    // Fetch only published videos
     pipeline.push({ $match: { isPublished: true } });
 
-    //sortBy can be views, createdAt, duration
-    //sortType can be ascending(-1) or descending(1)
-    if (sortBy && sortType) {
+    // Apply sorting
+    if (sortBy) {
         pipeline.push({
             $sort: {
                 [sortBy]: sortType === "asc" ? 1 : -1
@@ -54,6 +148,7 @@ const getAllVideos = asyncHandler(async (req, res) => {
         pipeline.push({ $sort: { createdAt: -1 } });
     }
 
+    // Lookup owner details
     pipeline.push(
         {
             $lookup: {
@@ -65,7 +160,7 @@ const getAllVideos = asyncHandler(async (req, res) => {
                     {
                         $project: {
                             username: 1,
-                            avtar: 1
+                            avatar: 1
                         }
                     }
                 ]
@@ -74,21 +169,20 @@ const getAllVideos = asyncHandler(async (req, res) => {
         {
             $unwind: "$ownerDetails"
         }
-    )
+    );
 
-    const videoAggregate = Vidio.aggregate(pipeline);
-
+    // Apply pagination
     const options = {
         page: parseInt(page, 10),
         limit: parseInt(limit, 10)
     };
 
-    const video = await Vidio.aggregatePaginate(videoAggregate, options);
+    const videoAggregate = Vidio.aggregate(pipeline);
+    const videos = await Vidio.aggregatePaginate(videoAggregate, options);
 
-    return res
-        .status(200)
-        .json(new ApiResponse(200, video, "Videos fetched successfully"));
-})
+    return res.status(200).json(new ApiResponse(200, videos, "Videos fetched successfully"));
+});
+
 const publishAVidio=asyncHandler(async(req,res)=>{
     const {title,description,duration}=req.body;
     if(!title||!description||!duration||title===""){
