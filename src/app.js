@@ -1,9 +1,10 @@
 import express from 'express';
 import cookieParser from "cookie-parser";
 import cors from 'cors';
+import { ApiError } from './utils/ApiError.js';
 const app=express();
 app.use(cors({
-    origin:'https://stream-hub-frontend.vercel.app',
+    origin:['https://stream-hub-frontend.vercel.app','http://localhost:5173'],
     credentials:true
 }));
 // http://localhost:5173
@@ -32,4 +33,28 @@ app.use("/api/v1/tweets",tweetRouter);
 app.use("/api/v1/playlist",playlistRouter);
 app.use("/api/v1/dashboard",dashboardRouter);
 app.use("/api/v1/healthcheck",healthcheckRouter);
+
+// Global error handler - must be after all routes
+app.use((err, req, res, next) => {
+    // If it's an ApiError, use its properties
+    if (err instanceof ApiError) {
+        return res.status(err.statusCode).json({
+            success: err.success,
+            message: err.message,
+            errors: err.errors,
+            data: err.data,
+            ...(process.env.NODE_ENV === 'development' && { stack: err.stack })
+        });
+    }
+
+    // For other errors, return a generic 500 error
+    return res.status(500).json({
+        success: false,
+        message: err.message || "Internal Server Error",
+        errors: [],
+        data: null,
+        ...(process.env.NODE_ENV === 'development' && { stack: err.stack })
+    });
+});
+
 export {app};

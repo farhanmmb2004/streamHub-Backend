@@ -91,34 +91,17 @@ import mongoose  from "mongoose"
 // })
 const getAllVideos = asyncHandler(async (req, res) => {
     const { page = 1, limit = 10, query, sortBy, sortType, userId } = req.query;
-    
     const pipeline = [];
 
-    // If search query exists, perform a separate search query
+    // Search by title or description using regex
     if (query) {
-        const searchResults = await Vidio.aggregate([
-            {
-                $search: {
-                    index: "search-videos",
-                    text: {
-                        query: query,
-                        path: ["title", "description"]
-                    }
-                }
-            },
-            {
-                $project: { _id: 1 } // Only fetch IDs to use in the next pipeline
-            }
-        ]);
-
-        const videoIds = searchResults.map(video => video._id);
-
-        if (videoIds.length === 0) {
-            return res.status(200).json(new ApiResponse(200, [], "No videos found"));
-        }
-
         pipeline.push({
-            $match: { _id: { $in: videoIds } }
+            $match: {
+                $or: [
+                    { title: { $regex: query, $options: "i" } },
+                    { description: { $regex: query, $options: "i" } }
+                ]
+            }
         });
     }
 
