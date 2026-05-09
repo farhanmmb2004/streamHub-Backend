@@ -76,7 +76,7 @@ const getVideoComments = asyncHandler(async (req, res) => {
         }
     ]);
     // let comments=await Comment.find({vidio:vidioId});
-    return res.status(200).json(new ApiResponse(200,comments,"aah aah chud gyi chud gyi"));
+    return res.status(200).json(new ApiResponse(200,comments,"faetched successfully"));
     
 })
 
