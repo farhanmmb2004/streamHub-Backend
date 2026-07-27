@@ -24,6 +24,8 @@ import tweetRouter from './routes/tweet.routes.js'
 import playlistRouter from './routes/playlist.routes.js'
 import dashboardRouter from './routes/dashboard.routes.js'
 import healthcheckRouter from './routes/healthcheck.routes.js'
+import feedRouter from './routes/feed.routes.js'
+app.use("/api/v1/feed",feedRouter);
 app.use("/api/v1/users",userRouter);
 app.use("/api/v1/vidios",vidioRouter);
 app.use("/api/v1/likes",likeRouter);
