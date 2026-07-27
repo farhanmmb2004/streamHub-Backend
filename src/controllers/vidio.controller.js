@@ -7,6 +7,7 @@ import { Like} from "../models/like.model.js"
 import { Comment } from "../models/comment.model.js"
 import { isValidObjectId } from "mongoose"
 import { uploadOnCloudinary,removeFromCloudinary } from "../utils/cloudinary.js"
+import { fanoutQueue } from "../queues/fanoutQueue.js"
 import mongoose  from "mongoose"
 // const getAllVideos = asyncHandler(async (req, res) => {
 //   const { page = 1, limit = 10, query, sortBy, sortType, userId } = req.query
@@ -190,6 +191,16 @@ const publishAVidio=asyncHandler(async(req,res)=>{
         duration,
         owner:req.user._id
     })
+    try {
+        await fanoutQueue.add("fanout-video", {
+            videoId: uploadedVidio._id.toString(),
+            ownerId: uploadedVidio.owner.toString()
+        });
+    } catch (error) {
+        // Mongo is the source of truth for the video itself; a queue hiccup
+        // just means feeds pick it up late via backfill, not a failed upload.
+        console.error("failed to enqueue fanout job", error);
+    }
     res
     .status(200)
     .json(new ApiResponse(200,uploadedVidio,"vidio uploaded successfully"));

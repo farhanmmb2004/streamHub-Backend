@@ -4,7 +4,22 @@ import { Subscription } from "../models/subscription.model.js"
 import {ApiError} from "../utils/ApiError.js"
 import {ApiResponse} from "../utils/ApiResponse.js"
 import {asyncHandler} from "../utils/asyncHandler.js"
+import { upsertSubscriptionEdge, removeSubscriptionEdge } from "../utils/neo4jClient.js"
 
+// Neo4j mirrors the Subscription collection for fast subscriber lookups during
+// fanout; Mongo stays the source of truth, so a graph write failure here must
+// not break subscribe/unsubscribe.
+const syncGraphEdge = async (subscriberId, channelId, isSubscribed) => {
+    try {
+        if (isSubscribed) {
+            await upsertSubscriptionEdge(subscriberId, channelId);
+        } else {
+            await removeSubscriptionEdge(subscriberId, channelId);
+        }
+    } catch (error) {
+        console.error("neo4j subscription sync failed", error);
+    }
+};
 
 const toggleSubscription = asyncHandler(async (req, res) => {
     const {channelId} = req.params
@@ -17,13 +32,15 @@ const toggleSubscription = asyncHandler(async (req, res) => {
     })
     if(isSubscribed){
     await Subscription.deleteOne({_id:isSubscribed._id});
-    return res.status(200).json(new ApiResponse(200,{isSubscribed:false},"unSubscribed"));    
+    await syncGraphEdge(req.user?._id, channelId, false);
+    return res.status(200).json(new ApiResponse(200,{isSubscribed:false},"unSubscribed"));
     }
     await Subscription.create({
     channel:channelId,
     subscriber:req.user?._id
-    }); 
-    return res.status(200).json(new ApiResponse(200,{isSubscribed:true},"subscribed"))   
+    });
+    await syncGraphEdge(req.user?._id, channelId, true);
+    return res.status(200).json(new ApiResponse(200,{isSubscribed:true},"subscribed"))
 })
 
 // controller to return subscriber list of a channel
