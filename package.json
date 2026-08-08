@@ -6,7 +6,8 @@
   "type": "module",
   "scripts": {
     "dev": "nodemon -r dotenv/config --experimental-json-modules src/index.js",
-    "worker": "nodemon -r dotenv/config --experimental-json-modules src/queues/fanout.worker.js"
+    "worker": "nodemon -r dotenv/config --experimental-json-modules src/queues/fanout.worker.js",
+    "backfill:graph": "node -r dotenv/config src/scripts/backfillSubscriptionGraph.js"
   },
   "author": "faran",
   "license": "ISC",

@@ -1,6 +1,7 @@
 import {ApiResponse} from "../utils/ApiResponse.js"
 import {asyncHandler} from "../utils/asyncHandler.js"
 import redisClient from "../utils/redisClient.js"
+import { videoCacheKey, cacheVideoRecord, formatVideoRecord } from "../utils/videoCache.js"
 import { Vidio } from "../models/vidio.model.js"
 import { Subscription } from "../models/subscription.model.js"
 
@@ -12,39 +13,29 @@ const hydrateVideos = async (videoIds) => {
     if (!videoIds.length) return [];
 
     const cachePipeline = redisClient.pipeline();
-    videoIds.forEach((id) => cachePipeline.hgetall(`video:${id}`));
+    videoIds.forEach((id) => cachePipeline.hgetall(videoCacheKey(id)));
     const cached = await cachePipeline.exec();
 
     const videos = [];
     const missedIds = [];
     cached.forEach(([err, data], index) => {
-        if (!err && data && Object.keys(data).length) {
-            videos.push(data);
+        if (!err && data && data.ownerDetails) {
+            videos.push(formatVideoRecord(data));
         } else {
             missedIds.push(videoIds[index]);
         }
     });
 
     if (missedIds.length) {
-        const fresh = await Vidio.find({ _id: { $in: missedIds }, isPublished: true }).lean();
-        const refillPipeline = redisClient.pipeline();
-        fresh.forEach((video) => {
-            const record = {
-                _id: video._id.toString(),
-                title: video.title,
-                thumbnail: video.thumbnail,
-                vidioFile: video.vidioFile,
-                duration: String(video.duration),
-                owner: video.owner.toString(),
-                createdAt: String(video.createdAt.getTime())
-            };
-            refillPipeline.hset(`video:${video._id}`, record);
-            videos.push(record);
-        });
-        await refillPipeline.exec();
+        const fresh = await Vidio.find({ _id: { $in: missedIds }, isPublished: true })
+            .populate("owner", "username avtar")
+            .lean();
+        for (const video of fresh) {
+            videos.push(await cacheVideoRecord(video));
+        }
     }
 
-    videos.sort((a, b) => Number(b.createdAt) - Number(a.createdAt));
+    videos.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
     return videos;
 };
 

@@ -8,7 +8,7 @@ cloudinary.config({
 const uploadOnCloudinary=async (loaclFilePath)=>{
     try{
      if(!loaclFilePath){
-     return 
+     return
      }
      const response=await cloudinary.uploader
      .upload(
@@ -16,11 +16,17 @@ const uploadOnCloudinary=async (loaclFilePath)=>{
             resource_type: 'auto',
          }
      )
-     fs.unlinkSync(loaclFilePath);
+     // loaclFilePath may be a remote URL (no local file to clean up) instead
+     // of a path multer wrote to disk
+     if(fs.existsSync(loaclFilePath)){
+        fs.unlinkSync(loaclFilePath);
+     }
      return response
     }
     catch(error){
-     fs.unlinkSync(loaclFilePath);
+     if(fs.existsSync(loaclFilePath)){
+        fs.unlinkSync(loaclFilePath);
+     }
      return null
     }
 }
